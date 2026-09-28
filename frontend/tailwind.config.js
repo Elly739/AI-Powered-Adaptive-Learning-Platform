@@ -1,0 +1,40 @@
+/** @type {import('@tailwindcss').Config} */
+module.exports = {
+  content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: '#eef2ff',
+          100: '#e0e7ff',
+          200: '#c7d2fe',
+          300: '#a78bfa',
+          400: '#8b5cf6',
+          500: '#6366f1',
+          600: '#4f46e5',
+          700: '#4338ca',
+          800: '#312e81',
+          900: '#1e1b5f',
+          950: '#1e1b5f',
+        },
+        background: '#0f172a',
+        foreground: '#f1f5f9',
+        card: '#1e293b',
+        'card-foreground': '#f8fafc',
+        muted: '#334155',
+        'muted-foreground': '#94a3b8',
+        border: '#334155',
+        input: '#334155',
+        ring: '#6366f1',
+        'ring-offset-background': '#0f172a',
+        accent: '#6366f1',
+        'accent-foreground': '#ffffff',
+        destructive: '#ef4444',
+        'destructive-foreground': '#ffffff',
+        success: '#22c55e',
+        warning: '#f59e0b',
+      },
+    },
+  },
+  plugins: [],
+};
