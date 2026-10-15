@@ -72,14 +72,29 @@ def seed_database():
         db.commit()
 
         lessons = []
-        for i in range(1, 6):
+        lesson_titles = [
+            "Variables and Data Types",
+            "Control Structures: Conditionals and Loops", 
+            "Functions and Modular Programming",
+            "Data Structures: Lists and Dictionaries",
+            "Object-Oriented Programming Basics"
+        ]
+        lesson_contents = [
+            "Learn about variables, data types (int, float, string, boolean), and basic operations in Python. Understand how to declare variables and assign values.",
+            "Master conditional statements (if, elif, else) and loops (for, while). Learn to control program flow based on conditions and iterate over data.",
+            "Understand how to create and use functions, pass arguments, return values, and organize code into reusable modules.",
+            "Work with Python's built-in data structures: lists, dictionaries, tuples, and sets. Learn common operations and when to use each structure.",
+            "Introduction to classes, objects, methods, and encapsulation. Learn how to create reusable code templates and implement basic OOP concepts."
+        ]
+        
+        for i, (title, content) in enumerate(zip(lesson_titles, lesson_contents), 1):
             lesson = Lesson(
                 course_id=course.id,
-                title=f"Lesson {i}: {'Variables and Data Types' if i==1 else f'Topic {i}'}",
-                content=f"This lesson covers core concepts for topic {i}. Students will learn through interactive examples and adaptive quizzes.",
-                content_type=f"lesson",
+                title=f"Lesson {i}: {title}",
+                content=content,
+                content_type="lesson",
                 order_index=i,
-                duration_minutes=15,
+                duration_minutes=20,
             )
             db.add(lesson)
             lessons.append(lesson)

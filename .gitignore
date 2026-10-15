@@ -38,3 +38,6 @@ frontend/node_modules/
 # Logs
 *.log
 server.log
+
+# Kilo Agent Manager
+.kilo/

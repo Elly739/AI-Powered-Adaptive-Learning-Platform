@@ -161,6 +161,7 @@ class QuizResponse(QuizBase):
 class AnswerSubmit(BaseModel):
     question_id: int
     selected_answer: str
+    response_time: Optional[float] = None
 
 class QuizAttemptStart(BaseModel):
     quiz_id: int

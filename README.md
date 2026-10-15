@@ -4,11 +4,11 @@ A web platform that personalizes course content, practice quizzes, and study sch
 
 ## Features
 
-- **Adaptive Quiz Engine** - Difficulty adjusts in real-time based on correctness and response time
-- **Learning Style Detection** - Identifies visual, auditory, reading/writing, or kinesthetic preferences
-- **Spaced Repetition Scheduling** - SM-2 algorithm generates personalized study plans
-- **Progress Tracking** - Dashboard with learning statistics and performance analytics
-- **JWT Authentication** - Secure login with token-based session management
+- **Adaptive Quiz Engine** – Difficulty adjusts in real-time based on correctness and response time
+- **Learning Style Detection** – Identifies visual, auditory, reading/writing, or kinesthetic preferences
+- **Spaced Repetition Scheduling** – SM-2 algorithm generates personalized study plans
+- **Progress Tracking** – Dashboard with learning statistics and performance analytics
+- **JWT Authentication** – Secure login with token-based session management
 
 ## Tech Stack
 
@@ -16,198 +16,140 @@ A web platform that personalizes course content, practice quizzes, and study sch
 |-------|-----------|
 | Backend | Python, FastAPI, SQLAlchemy, SQLite, bcrypt, JWT |
 | Frontend | React 18, Vite, Tailwind CSS, React Router, Lucide Icons |
-| Testing | pytest |
+| Testing | pytest, Vitest, React Testing Library, Playwright |
 
 ## Quick Start
 
 ### Prerequisites
-
 - Python 3.10+
 - Node.js 18+
 - npm
 
 ### 1. Clone and Setup
-
 ```bash
 git clone https://github.com/Elly739/AI-Powered-Adaptive-Learning-Platform.git
 cd AI-Powered-Adaptive-Learning-Platform
 ```
 
 ### 2. Start Backend
-
 ```bash
 cd backend
 pip install -r requirements.txt
 python -m uvicorn main:app --reload --host 127.0.0.1 --port 8000
 ```
-
-API documentation is available at `http://127.0.0.1:8000/docs`.
+API docs: http://127.0.0.1:8000/docs
 
 ### 3. Start Frontend
-
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
+App: http://localhost:5173
 
-The application is available at `http://localhost:5173`.
-
-### 4. Environment Setup
-
+### 4. Environment
 Create `backend/.env`:
-
-```env
+```
 database_url=sqlite:///./adaptive_learning.db
 secret_key=your-secret-key-here
 algorithm=HS256
 access_token_expire_minutes=10080
 ```
 
-## Default Credentials
-
-The database is seeded with test users on startup:
-
+### Default Credentials (seeded on startup)
 | Email | Password |
 |-------|----------|
-| `student1@university.edu` | `password123` |
-| `student2@university.edu` | `password123` |
-| `student3@university.edu` | `password123` |
+| student1@university.edu | password123 |
+| student2@university.edu | password123 |
+| student3@university.edu | password123 |
 
-## Project Structure
+## How the AI Works
 
+The adaptive engine (`backend/adaptive_engine.py`) implements three core algorithms:
+
+### 1. Difficulty Adjustment
+- Sliding window of last 5 answers
+- Accuracy = correct / total
+- Response time factored: fast correct → ↑ difficulty, slow/wrong → ↓ difficulty
+- Difficulty clamped between 0.1–0.9
+
+### 2. Learning Style Detection
+Requires ≥5 answers:
+- **Fast & Accurate** (avg response <6s, accuracy >70%) → Reading/Writing
+- **Slow but Accurate** (avg response >10s, accuracy >70%, consistent timing) → Auditory
+- **Inconsistent Timing** (high response time std dev) → Kinesthetic
+- **Default** → Visual
+Returns style + confidence score (0.3–0.95)
+
+### 3. Spaced Repetition Scheduling (SM-2 variant)
+- For each incomplete lesson: base interval based on accuracy, multiplied by pace (slow:1.5×, medium:1.0×, fast:0.7×)
+- Schedules lesson → quiz 1 day later
+- For previously completed but weak lessons: practice items with 7-day interval adjusted by preferred difficulty
+
+## Project Structure (key files)
 ```
 .
-backend/
-  main.py              FastAPI app, database initialization, seed data
-  database.py          SQLAlchemy setup and session management
-  models.py            Database models
-  schemas.py           Pydantic request/response models
-  auth.py             JWT authentication and password hashing
-  adaptive_engine.py   AI engine: difficulty, style detection, scheduling
-  routers/
-    auth.py            Register, login, user profile
-    courses.py         Course and lesson CRUD
-    quizzes.py         Adaptive quiz engine
-    progress.py        Lesson completion tracking
-    schedule.py        Study schedule generation
-    dashboard.py       Statistics and learning profile
-  tests/
-    test_adaptive_engine.py  Unit tests for AI engine
-
-frontend/
-  src/
-    App.jsx            Route configuration and layout
-    main.jsx           React entry point
-    components/        Reusable UI components (ErrorBoundary, Layout)
-    contexts/          Auth context with JWT management
-    pages/             Page components (Login, Dashboard, Quiz, etc.)
-    api/               Axios client configuration
-  tailwind.config.js   Tailwind CSS configuration
-  vite.config.js       Vite build configuration
+├── backend/
+│   ├── main.py               # FastAPI app, DB init, seed data
+│   ├── adaptive_engine.py    # Core AI: difficulty, style, scheduling
+│   ├── models.py             # DB models (User, Course, Lesson, Quiz, etc.)
+│   ├── routers/              # API routers (auth, courses, quizzes, etc.)
+│   └── tests/                # 30 unit tests for adaptive engine
+└── frontend/
+    ├── src/
+    │   ├── pages/            # Login, Register, Dashboard, CourseList, etc.
+    │   └── api/client.js     # Axios instance with auth interceptor
+    ├── vitest.config.js      # Unit test config
+    └── playwright.config.js  # E2E test config
 ```
 
-## Adaptive Engine
-
-The `adaptive_engine.py` implements three core AI capabilities:
-
-### Difficulty Adjustment
-
-Uses a sliding window of recent answers (default: 5). Correctly answered questions increase difficulty; incorrect ones decrease it. Response time is factored in -- fast and correct yields a larger boost, slow and incorrect causes a sharp decrease. Difficulty is clamped between 0.1 and 0.9.
-
-**Input:** list of (correct: bool, response_time: float) tuples
-**Output:** next difficulty target (float 0.1-0.9)
-
-### Learning Style Detection
-
-Analyzes interaction patterns to classify learners into four types:
-
-| Style | Pattern |
-|-------|---------|
-| Reading/Writing | Fast response times with high accuracy |
-| Auditory | Slow but consistent performance with high accuracy |
-| Kinesthetic | Inconsistent timing patterns |
-| Visual | Default fallback for even-paced learners |
-
-### Spaced Repetition Scheduling
-
-Built on the SM-2 algorithm with personalized modifications:
-
-- **Pace multipliers**: slow (1.5x interval), medium (1.0x), fast (0.7x)
-- **Difficulty factor**: incorrect answers reduce future intervals more aggressively
-- **Content type weighting**: lessons and quizzes scheduled with different optimal intervals
-
-## API Endpoints
+## API Endpoints (selected)
 
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/auth/register` | No | Register a new user |
-| POST | `/auth/login` | No | Login (OAuth2 form) |
-| GET | `/auth/me` | Yes | Get current user profile |
-| PUT | `/auth/me` | Yes | Update user profile |
-| GET | `/courses` | Yes | List all courses |
-| GET | `/courses/{id}` | Yes | Get course with lessons and quizzes |
-| POST | `/courses` | Yes | Create a new course |
-| GET | `/courses/{id}/lessons` | Yes | List course lessons |
-| POST | `/courses/{id}/quizzes` | Yes | Create a quiz with questions |
-| POST | `/quizzes/{id}/attempts/start` | Yes | Start an adaptive quiz attempt |
-| POST | `/quizzes/attempts/{id}/answer` | Yes | Submit an answer, receive next question |
-| GET | `/quizzes/attempts/{id}` | Yes | Get quiz attempt results |
-| GET | `/progress` | Yes | Get learning progress |
-| POST | `/progress/lesson/{id}/complete` | Yes | Mark a lesson as completed |
-| GET | `/dashboard/stats` | Yes | Get dashboard statistics |
-| GET | `/dashboard/profile` | Yes | Get learning profile details |
-| GET | `/schedule` | Yes | List study schedule items |
-| POST | `/schedule/generate/{course_id}` | Yes | Generate AI-powered study schedule |
-| PUT | `/schedule/{item_id}/complete` | Yes | Mark a schedule item as complete |
-| GET | `/schedule/recommendations` | Yes | Get AI-powered study recommendations |
+| POST | `/auth/register` | No | Register |
+| POST | `/auth/login` | No | Login |
+| GET | `/courses` | Yes | List courses |
+| POST | `/quizzes/{id}/attempts/start` | Yes | Start adaptive quiz |
+| POST | `/quizzes/attempts/{id}/answer` | Yes | Submit answer (includes response_time) |
+| GET | `/progress` | Yes | Learning progress |
+| GET | `/dashboard/stats` | Yes | Dashboard statistics |
+| POST | `/schedule/generate/{course_id}` | Yes | Generate study schedule |
+| GET | `/schedule/recommendations` | Yes | AI recommendations |
 
 ## Development
 
 ### Backend
-
 ```bash
 cd backend
-
-# Run dev server with auto-reload
-python -m uvicorn main:app --reload
-
-# Run tests
-python -m pytest tests/ -v
-python test_api.py
-
-# Syntax check
-python -c "import py_compile; py_compile.compile('main.py', doraise=True)"
+python -m uvicorn main:app --reload   # dev server
+python -m pytest tests/ -v            # run tests
 ```
 
 ### Frontend
-
 ```bash
 cd frontend
-
-# Development server
-npm run dev
-
-# Production build
-npm run build
-
-# Lint
-npm run lint
-
-# Preview production build
-npm run preview
+npm run dev                           # dev server
+npm run test                          # unit tests (Vitest)
+npm run test:e2e                      # E2E tests (Playwright)
+npm run build                         # production build
 ```
 
-### Production Deployment
+## Testing
+- **Backend**: 30+ unit tests covering adaptive algorithms (see `backend/tests/test_adaptive_engine.py`)
+- **Frontend**: Unit tests with Vitest + React Testing Library (under `frontend/src/__tests__/`)
+- **E2E**: Playwright tests (under `frontend/tests/`)
 
-The frontend can be served with any static file server:
-
-```bash
-cd frontend
-npm run build
-python -m http.server 3000  # Serves from frontend/dist/
-```
+## CI/CD
+GitHub Actions workflow (`.github/workflows/main.yml`) runs on push/PR to `main`/`develop`:
+- Installs dependencies
+- Runs backend tests (pytest)
+- Installs Playwright browsers
+- Runs frontend unit tests (Vitest) with coverage
+- Runs frontend E2E tests (Playwright)
+- Builds frontend for production
+- Lints frontend with ESLint
+- Uploads build artifact
 
 ## License
-
 MIT

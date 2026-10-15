@@ -128,7 +128,7 @@ def submit_answer(
         question_id=answer_data.question_id,
         selected_answer=answer_data.selected_answer,
         is_correct=is_correct,
-        response_time=5.0,
+        response_time=answer_data.response_time if answer_data.response_time is not None else 5.0,
     )
     db.add(answer)
     db.flush()
