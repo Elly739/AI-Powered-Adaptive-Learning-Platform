@@ -39,7 +39,7 @@ describe('StudySchedule', () => {
 
     // Wait for loading to complete and schedule to appear
     expect(await screen.findByText(/My Study Schedule/i)).toBeInTheDocument();
-    expect(screen.getByText(/Schedule/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Schedule' })).toBeInTheDocument();
     expect(screen.getByText(/AI Recommendations/i)).toBeInTheDocument();
   });
 
@@ -66,7 +66,7 @@ describe('StudySchedule', () => {
     );
 
     // Initially should be in list view
-    expect(screen.getByText(/Upcoming/i)).toBeInTheDocument();
+    expect(await screen.findByText('Upcoming')).toBeInTheDocument();
     
     // Click calendar view button
     const calendarButton = screen.getByRole('button', { name: /Calendar View/i });
