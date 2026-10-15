@@ -47,8 +47,9 @@ jobs:
       working-directory: ./backend
       run: |
         # Start the server in the background
-        nohup python -m uvicorn main:app --host 127.0.0.1 --port 8000 > server.log 2>&1 &
-        echo $! > server.pid
+        python -m uvicorn main:app --host 127.0.0.1 --port 8000 &
+        BACKEND_PID=$!
+        echo "Backend PID: $BACKEND_PID"
         # Wait for server to be ready
         for i in {1..30}; do
           if curl -s http://127.0.0.1:8000/health > /dev/null; then
@@ -61,7 +62,7 @@ jobs:
         # If server not ready after 30 seconds, fail
         if ! curl -s http://127.0.0.1:8000/health > /dev/null; then
           echo "Server failed to start"
-          cat server.log
+          kill $BACKEND_PID
           exit 1
         fi
     
@@ -93,9 +94,9 @@ jobs:
       working-directory: ./backend
       if: always()
       run: |
-        if [ -f server.pid ]; then
-          kill $(cat server.pid) || true
-          rm server.pid
+        if [ -n "$BACKEND_PID" ] && kill -0 $BACKEND_PID 2>/dev/null; then
+          kill $BACKEND_PID
+          echo "Backend server stopped"
         fi
     
     - name: Upload Build Artifact
