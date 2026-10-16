@@ -10,6 +10,8 @@ vi.mock('../api/client', () => ({
   default: { get: vi.fn(), post: vi.fn(), put: vi.fn() },
 }));
 
+const tomorrow = () => new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
 describe('StudySchedule', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -22,7 +24,7 @@ describe('StudySchedule', () => {
         { 
           id: 1, 
           content_type: 'lesson', 
-          recommended_date: '2026-10-15T10:00:00Z',
+          recommended_date: tomorrow(),
           scheduled_time_minutes: 30,
           completed: false 
         } 
@@ -50,7 +52,7 @@ describe('StudySchedule', () => {
         { 
           id: 1, 
           content_type: 'lesson', 
-          recommended_date: '2026-10-15T10:00:00Z',
+          recommended_date: tomorrow(),
           scheduled_time_minutes: 30,
           completed: false 
         } 
@@ -73,7 +75,8 @@ describe('StudySchedule', () => {
     await userEvent.click(calendarButton);
     
     // Should now show calendar view elements
-    expect(screen.getByText(/October 2026/i)).toBeInTheDocument(); // Current month
+    const currentMonth = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(new Date());
+    expect(screen.getByText(currentMonth)).toBeInTheDocument();
     expect(screen.getByText(/Sun/i)).toBeInTheDocument();
     expect(screen.getByText(/Mon/i)).toBeInTheDocument();
     
@@ -82,7 +85,7 @@ describe('StudySchedule', () => {
     await userEvent.click(listButton);
     
     // Should show list view again
-    expect(screen.getByText(/Lesson/i)).toBeInTheDocument();
-    expect(screen.getByText(/Complete/i)).toBeInTheDocument();
+    expect(await screen.findByText('lesson')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Complete' })).toBeInTheDocument();
   });
 });
